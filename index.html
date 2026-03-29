@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Metro Evader - Hindari Meteor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+            padding: 16px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .game-wrapper {
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(10px);
+            border-radius: 48px;
+            padding: 16px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255,255,255,0.1);
+            border: 1px solid #ffaa44;
+            position: relative;
+            z-index: 1;
+            max-width: 650px;
+            width: 100%;
+        }
+
+        .game-container {
+            text-align: center;
+        }
+
+        .stats-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: #0f0f1ecc;
+            backdrop-filter: blur(8px);
+            padding: 10px 16px;
+            border-radius: 50px;
+            margin-bottom: 16px;
+            border: 1px solid #ffaa44;
+        }
+
+        .stat-card {
+            background: #2a2a3e;
+            padding: 5px 12px;
+            border-radius: 30px;
+            color: #ffdd99;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            box-shadow: inset 0 1px 2px #4a4a6e, 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .player-name {
+            background: #ffaa44;
+            padding: 5px 14px;
+            border-radius: 30px;
+            color: #1a1a2e;
+            font-weight: bold;
+            font-size: 0.85rem;
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .settings-btn {
+            background: #ff8844;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #aa5522;
+            transition: 0.05s;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #aa5522;
+        }
+
+        canvas {
+            background: linear-gradient(180deg, #2c3e50 0%, #1a2632 100%);
+            border-radius: 28px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), inset 0 0 0 3px #ffaa44;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            height: auto;
+            max-width: 600px;
+            cursor: pointer;
+        }
+
+        /* Tombol akselerasi kiri-kanan */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .ctrl-btn {
+            width: 90px;
+            height: 90px;
+            background: radial-gradient(circle at 30% 30%, #ffaa44, #dd8822);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), inset 0 2px 5px rgba(255,255,200,0.8);
+            transition: 0.05s linear;
+            border: none;
+            font-size: 3rem;
+            color: white;
+            text-shadow: 0 2px 4px #aa5522;
+            touch-action: manipulation;
+        }
+
+        .ctrl-btn:active {
+            transform: scale(0.92);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .start-btn-overlay {
+            background: #ffaa44;
+            padding: 8px 28px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #1a1a2e;
+            cursor: pointer;
+            border: none;
+            margin-top: 12px;
+            display: inline-block;
+            transition: 0.05s;
+            box-shadow: 0 4px 0 #aa5522;
+        }
+
+        .start-btn-overlay:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #aa5522;
+        }
+
+        .status-text {
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: #ffcc88;
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 12px;
+            font-size: 0.6rem;
+            color: #ffaa88;
+            text-align: center;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #2a2a3a;
+            width: 90%;
+            max-width: 360px;
+            border-radius: 48px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.5);
+            border: 2px solid #ffaa44;
+        }
+
+        .modal-content h2 {
+            color: #ffaa44;
+            font-size: 1.6rem;
+            margin-bottom: 12px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 50px;
+            border: 2px solid #ffaa44;
+            font-size: 1rem;
+            margin: 12px 0;
+            text-align: center;
+            background: #1e1e2e;
+            color: white;
+        }
+
+        .modal-content button {
+            background: #ffaa44;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #1a1a2e;
+            cursor: pointer;
+        }
+
+        .info-modal {
+            background: #1e1e2e;
+            color: #ffdd99;
+        }
+
+        .info-modal p {
+            margin: 12px 0;
+            line-height: 1.45;
+            font-size: 0.85rem;
+        }
+
+        .close-info {
+            background: #ffaa44;
+            color: #1a1a2e;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 550px) {
+            .ctrl-btn {
+                width: 75px;
+                height: 75px;
+                font-size: 2.5rem;
+            }
+            .stats-panel {
+                padding: 6px 12px;
+            }
+            .stat-card {
+                font-size: 0.7rem;
+                padding: 3px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="game-wrapper">
+    <div class="game-container">
+        <div class="stats-panel">
+            <div class="player-name" id="playerNameDisplay">🏙️ Pemain</div>
+            <div class="stat-card"><span>💫</span> <span id="scoreValue">0</span></div>
+            <div class="stat-card"><span>🏆</span> <span id="maxScoreValue">0</span></div>
+            <div class="stat-card"><span>⭐</span> Lv.<span id="levelValue">1</span></div>
+            <div class="stat-card"><span>✨</span> EXP <span id="expValue">0</span>/<span id="expNeeded">100</span></div>
+            <button class="settings-btn" id="settingsBtn">⚙️</button>
+        </div>
+
+        <canvas id="gameCanvas" width="600" height="550"></canvas>
+
+        <!-- Tombol akselerasi kiri-kanan -->
+        <div class="controls">
+            <button class="ctrl-btn" id="leftBtn">⬅️</button>
+            <button class="ctrl-btn" id="rightBtn">➡️</button>
+        </div>
+        <div id="gameStatusText" class="status-text">✨ Tekan tombol kiri/kanan untuk menghindari meteor ✨</div>
+        <div id="startButtonContainer" style="margin-top: 8px;"></div>
+        <footer>🌆 Hindari meteor yang jatuh | Lewati meteor = dapat EXP | Level naik = meteor lebih cepat</footer>
+    </div>
+</div>
+
+<div id="nameModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>🏙️ Metro Evader 🏙️</h2>
+        <p style="color:#ffaa44;">Masukkan nama pemain:</p>
+        <input type="text" id="playerNameInput" maxlength="20" placeholder="Nama kamu..." autocomplete="off">
+        <button id="startNameBtn">Mulai Berlari</button>
+    </div>
+</div>
+
+<div id="infoModal" class="modal-overlay">
+    <div class="modal-content info-modal">
+        <h2>⚙️ Tentang Metro Evader</h2>
+        <p>🧘 <strong>Metro Evader</strong> — Bertahanlah di tengah kota yang diterjang meteor! Kendalikan karakter 🧘 dengan tombol ⬅️ ➡️ untuk menghindari meteor jatuh.</p>
+        <p>🎮 <strong>Cara bermain:</strong> Tekan tombol kiri/kanan untuk menggeser karakter. Hindari meteor yang jatuh dari atas. Setiap meteor yang berhasil dilewati (tanpa mengenai karakter) akan menambah skor dan EXP.</p>
+        <p>🏆 <strong>Level & EXP:</strong> Setiap meteor yang berhasil dilewati mendapat EXP. Naik level akan mempercepat jatuhnya meteor.</p>
+        <p>✨ <strong>Creator:</strong> <span style="color:#ffaa44;">@GameRemastered</span> | Tema Perkotaan 🌆</p>
+        <button class="close-info" id="closeInfoBtn">Tutup</button>
+    </div>
+</div>
+
+<script>
+    // ========== KONFIGURASI GAME ==========
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const CANVAS_W = 600;
+    const CANVAS_H = 550;
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
+    
+    let gameRunning = false;
+    let score = 0;
+    let maxScore = 0;
+    let animationId = null;
+    
+    // Karakter 🧘
+    let player = {
+        x: CANVAS_W / 2 - 20,
+        y: CANVAS_H - 70,
+        width: 40,
+        height: 45,
+        speed: 12
+    };
+    
+    // Meteor
+    let meteors = [];
+    let meteorSpawnCounter = 0;
+    let meteorSpawnDelay = 35;
+    let baseMeteorSpeed = 3.5;
+    let currentMeteorSpeed = 3.5;
+    
+    // Level & EXP
+    let currentLevel = 1;
+    let currentExp = 0;
+    let expNeeded = 100;
+    let playerName = "Pemain Kota";
+    
+    // Load localStorage
+    function loadLocalData() {
+        const savedMax = localStorage.getItem("metroEvaderMaxScore");
+        if(savedMax !== null) maxScore = parseInt(savedMax) || 0;
+        document.getElementById("maxScoreValue").innerText = maxScore;
+        
+        const savedLevel = localStorage.getItem("metroEvaderLevel");
+        if(savedLevel !== null) currentLevel = parseInt(savedLevel) || 1;
+        const savedExp = localStorage.getItem("metroEvaderExp");
+        if(savedExp !== null) currentExp = parseInt(savedExp) || 0;
+        const savedName = localStorage.getItem("metroEvaderPlayerName");
+        if(savedName !== null) playerName = savedName;
+        
+        expNeeded = 80 + (currentLevel - 1) * 50;
+        document.getElementById("levelValue").innerText = currentLevel;
+        document.getElementById("expValue").innerText = currentExp;
+        document.getElementById("expNeeded").innerText = expNeeded;
+        document.getElementById("playerNameDisplay").innerHTML = `🏙️ ${playerName.substring(0, 12)}`;
+        
+        updateSpeedByLevel();
+    }
+    
+    function updateSpeedByLevel() {
+        let newSpeed = Math.min(8.5, baseMeteorSpeed + (currentLevel - 1) * 0.35);
+        currentMeteorSpeed = newSpeed;
+        meteorSpawnDelay = Math.max(20, 38 - (currentLevel - 1) * 1.2);
+    }
+    
+    function saveProgress() {
+        localStorage.setItem("metroEvaderMaxScore", maxScore);
+        localStorage.setItem("metroEvaderLevel", currentLevel);
+        localStorage.setItem("metroEvaderExp", currentExp);
+        localStorage.setItem("metroEvaderPlayerName", playerName);
+    }
+    
+    function addExp(amount) {
+        currentExp += amount;
+        let leveledUp = false;
+        while(currentExp >= expNeeded) {
+            currentExp -= expNeeded;
+            currentLevel++;
+            expNeeded = 80 + (currentLevel - 1) * 50;
+            leveledUp = true;
+        }
+        if(leveledUp) {
+            updateSpeedByLevel();
+        }
+        document.getElementById("levelValue").innerText = currentLevel;
+        document.getElementById("expValue").innerText = currentExp;
+        document.getElementById("expNeeded").innerText = expNeeded;
+        saveProgress();
+    }
+    
+    function updateMaxScore() {
+        if(score > maxScore) {
+            maxScore = score;
+            document.getElementById("maxScoreValue").innerText = maxScore;
+            localStorage.setItem("metroEvaderMaxScore", maxScore);
+        }
+    }
+    
+    function resetGameState() {
+        player.x = CANVAS_W / 2 - 20;
+        score = 0;
+        meteors = [];
+        meteorSpawnCounter = 0;
+        gameRunning = false;
+        document.getElementById("scoreValue").innerText = score;
+        document.getElementById("gameStatusText").innerHTML = "💥 Terkena meteor... Tekan START";
+        const container = document.getElementById("startButtonContainer");
+        container.innerHTML = '<button id="startGameBtn" class="start-btn-overlay">🏙️ START EVADE 🏙️</button>';
+        const startBtn = document.getElementById("startGameBtn");
+        startBtn.addEventListener('click', () => { startGame(); });
+        draw();
+        if(animationId) cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+    
+    function startGame() {
+        if(gameRunning) return;
+        player.x = CANVAS_W / 2 - 20;
+        score = 0;
+        meteors = [];
+        meteorSpawnCounter = 0;
+        gameRunning = true;
+        document.getElementById("scoreValue").innerText = score;
+        document.getElementById("gameStatusText").innerHTML = "🧘 Hindari meteor! Tekan ⬅️ ➡️ 🧘";
+        const container = document.getElementById("startButtonContainer");
+        container.innerHTML = "";
+        if(animationId) cancelAnimationFrame(animationId);
+        animationId = requestAnimationFrame(gameLoop);
+    }
+    
+    function spawnMeteor() {
+        const meteorSize = 25 + Math.random() * 12;
+        meteors.push({
+            x: Math.random() * (CANVAS_W - meteorSize),
+            y: -meteorSize,
+            width: meteorSize,
+            height: meteorSize,
+            speed: currentMeteorSpeed + Math.random() * 1.5,
+            passed: false
+        });
+    }
+    
+    function updateGame() {
+        if(!gameRunning) return;
+        
+        // Spawn meteor
+        meteorSpawnCounter++;
+        if(meteorSpawnCounter >= meteorSpawnDelay) {
+            meteorSpawnCounter = 0;
+            spawnMeteor();
+            // kadang spawn double untuk tantangan
+            if(Math.random() < 0.2 + (currentLevel * 0.02)) {
+                spawnMeteor();
+            }
+        }
+        
+        // Update meteor position dan cek collision
+        for(let i = 0; i < meteors.length; i++) {
+            const m = meteors[i];
+            m.y += m.speed;
+            
+            // Cek collision dengan karakter
+            if(m.y + m.height > player.y && m.y < player.y + player.height &&
+               m.x + m.width > player.x && m.x < player.x + player.width) {
+                gameOver();
+                return;
+            }
+            
+            // Cek apakah meteor sudah melewati karakter (dapat EXP)
+            if(!m.passed && m.y + m.height > player.y + player.height) {
+                m.passed = true;
+                score++;
+                document.getElementById("scoreValue").innerText = score;
+                updateMaxScore();
+                let expGain = 8 + Math.floor(currentLevel * 0.6);
+                addExp(expGain);
+            }
+            
+            // Hapus meteor yang sudah keluar layar
+            if(m.y > CANVAS_H) {
+                meteors.splice(i,1);
+                i--;
+            }
+        }
+        
+        // Batas gerak karakter
+        if(player.x < 5) player.x = 5;
+        if(player.x + player.width > CANVAS_W - 5) player.x = CANVAS_W - player.width - 5;
+    }
+    
+    function gameOver() {
+        if(!gameRunning) return;
+        gameRunning = false;
+        if(animationId) cancelAnimationFrame(animationId);
+        animationId = null;
+        document.getElementById("gameStatusText").innerHTML = "💀 Terkena meteor... Tekan START 💀";
+        const container = document.getElementById("startButtonContainer");
+        container.innerHTML = '<button id="startGameBtn" class="start-btn-overlay">🏙️ START EVADE 🏙️</button>';
+        const startBtn = document.getElementById("startGameBtn");
+        startBtn.addEventListener('click', () => { startGame(); });
+        draw();
+    }
+    
+    function draw() {
+        ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+        
+        // Background gedung perkotaan
+        const gradBg = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+        gradBg.addColorStop(0, '#1e2a3a');
+        gradBg.addColorStop(0.6, '#0f1722');
+        ctx.fillStyle = gradBg;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        
+        // Gedung-gedung
+        const buildings = [
+            {x: 20, w: 45, h: 180}, {x: 80, w: 38, h: 240}, {x: 135, w: 52, h: 150},
+            {x: 200, w: 42, h: 280}, {x: 260, w: 48, h: 200}, {x: 325, w: 55, h: 320},
+            {x: 400, w: 40, h: 190}, {x: 460, w: 45, h: 260}, {x: 525, w: 50, h: 220}
+        ];
+        for(let b of buildings) {
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(b.x, CANVAS_H - b.h, b.w, b.h);
+            ctx.fillStyle = '#ffaa44';
+            for(let i=0; i<8; i++) {
+                ctx.fillRect(b.x + 5 + i*4, CANVAS_H - b.h + 10, 2, 8);
+            }
+            ctx.fillStyle = '#ffdd99';
+            for(let i=0; i<4; i++) {
+                ctx.fillRect(b.x + b.w/2 - 8 + i*5, CANVAS_H - 25, 3, 12);
+            }
+        }
+        
+        // Lampu jalan
+        for(let i=0; i<12; i++) {
+            ctx.fillStyle = '#ffaa44';
+            ctx.beginPath();
+            ctx.arc(40 + i*50, CANVAS_H - 35, 4, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#ffdd99';
+            ctx.beginPath();
+            ctx.arc(40 + i*50, CANVAS_H - 35, 2, 0, Math.PI*2);
+            ctx.fill();
+        }
+        
+        // Meteor
+        for(let m of meteors) {
+            const grad = ctx.createRadialGradient(m.x + m.width/2, m.y + m.height/2, 5, m.x + m.width/2, m.y + m.height/2, m.width/2);
+            grad.addColorStop(0, '#ff8844');
+            grad.addColorStop(1, '#aa4422');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.ellipse(m.x + m.width/2, m.y + m.height/2, m.width/2, m.height/2, 0, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#ffaa66';
+            ctx.beginPath();
+            ctx.ellipse(m.x + m.width/3, m.y + m.height/3, 3, 4, 0, 0, Math.PI*2);
+            ctx.fill();
+            // jejak api
+            ctx.fillStyle = '#ff6633';
+            for(let i=0; i<3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(m.x + m.width/2, m.y + m.height);
+                ctx.lineTo(m.x + m.width/2 - 5, m.y + m.height + 8);
+                ctx.lineTo(m.x + m.width/2 + 5, m.y + m.height + 8);
+                ctx.fill();
+            }
+        }
+        
+        // Karakter 🧘
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "#ffaa44";
+        ctx.font = `42px "Segoe UI Emoji", "Apple Color Emoji"`;
+        ctx.fillStyle = "#ffdd99";
+        ctx.fillText("🧘", player.x, player.y + 35);
+        // efek aura
+        ctx.beginPath();
+        ctx.arc(player.x + 22, player.y + 25, 25, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,170,68,0.2)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Garis jalan
+        ctx.strokeStyle = '#ffaa44';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([15, 25]);
+        ctx.beginPath();
+        ctx.moveTo(0, CANVAS_H - 55);
+        ctx.lineTo(CANVAS_W, CANVAS_H - 55);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Score display
+        ctx.font = 'bold 24px "Segoe UI"';
+        ctx.fillStyle = '#ffaa44';
+        ctx.shadowBlur = 0;
+        ctx.fillText(`💫 ${score}`, CANVAS_W - 90, 55);
+        
+        if(!gameRunning) {
+            ctx.font = 'bold 28px "Segoe UI"';
+            ctx.fillStyle = '#ffaa44';
+            ctx.fillText("💥 GAME OVER 💥", CANVAS_W/2-120, CANVAS_H/2 - 40);
+        }
+    }
+    
+    let lastTimestamp = 0;
+    const frameInterval = 1000 / 60; // 60 FPS smooth
+    
+    function gameLoop(timestamp) {
+        if(!gameRunning) {
+            draw();
+            return;
+        }
+        if(!lastTimestamp) lastTimestamp = timestamp;
+        const delta = timestamp - lastTimestamp;
+        if(delta >= frameInterval) {
+            updateGame();
+            draw();
+            lastTimestamp = timestamp - (delta % frameInterval);
+        }
+        animationId = requestAnimationFrame(gameLoop);
+    }
+    
+    // Kontrol akselerasi kiri/kanan
+    function moveLeft() {
+        if(!gameRunning) return;
+        player.x -= player.speed;
+        if(player.x < 5) player.x = 5;
+        const btn = document.getElementById('leftBtn');
+        btn.style.transform = 'scale(0.92)';
+        setTimeout(() => { if(btn) btn.style.transform = ''; }, 100);
+    }
+    
+    function moveRight() {
+        if(!gameRunning) return;
+        player.x += player.speed;
+        if(player.x + player.width > CANVAS_W - 5) player.x = CANVAS_W - player.width - 5;
+        const btn = document.getElementById('rightBtn');
+        btn.style.transform = 'scale(0.92)';
+        setTimeout(() => { if(btn) btn.style.transform = ''; }, 100);
+    }
+    
+    document.getElementById('leftBtn').addEventListener('click', (e) => { e.preventDefault(); moveLeft(); });
+    document.getElementById('leftBtn').addEventListener('touchstart', (e) => { e.preventDefault(); moveLeft(); }, {passive: false});
+    document.getElementById('rightBtn').addEventListener('click', (e) => { e.preventDefault(); moveRight(); });
+    document.getElementById('rightBtn').addEventListener('touchstart', (e) => { e.preventDefault(); moveRight(); }, {passive: false});
+    
+    // Keyboard support
+    window.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowLeft') { e.preventDefault(); moveLeft(); }
+        if(e.key === 'ArrowRight') { e.preventDefault(); moveRight(); }
+    });
+    
+    function initNameModal() {
+        const modal = document.getElementById('nameModal');
+        const input = document.getElementById('playerNameInput');
+        const startBtnModal = document.getElementById('startNameBtn');
+        
+        if(playerName && playerName !== "Pemain Kota") {
+            modal.classList.remove('active');
+            loadLocalData();
+            draw();
+            resetGameState();
+            return;
+        }
+        
+        modal.classList.add('active');
+        startBtnModal.onclick = () => {
+            let name = input.value.trim();
+            if(name === "") name = "Evader";
+            playerName = name;
+            document.getElementById("playerNameDisplay").innerHTML = `🏙️ ${playerName.substring(0, 12)}`;
+            localStorage.setItem("metroEvaderPlayerName", playerName);
+            modal.classList.remove('active');
+            loadLocalData();
+            draw();
+            resetGameState();
+        };
+        input.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') startBtnModal.click();
+        });
+    }
+    
+    function setupSettingsModal() {
+        const modal = document.getElementById('infoModal');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const closeBtn = document.getElementById('closeInfoBtn');
+        
+        settingsBtn.addEventListener('click', () => { modal.classList.add('active'); });
+        closeBtn.addEventListener('click', () => { modal.classList.remove('active'); });
+        modal.addEventListener('click', (e) => { if(e.target === modal) modal.classList.remove('active'); });
+    }
+    
+    function init() {
+        loadLocalData();
+        initNameModal();
+        setupSettingsModal();
+        draw();
+    }
+    
+    init();
+</script>
+</body>
+</html>
